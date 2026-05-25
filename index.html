@@ -627,6 +627,7 @@ function initFirebase() {
         fbRef.set(state);
       } else {
         state = data;
+        normalizeState(state);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         renderCurrentView();
       }
@@ -748,17 +749,29 @@ function defaultState() {
 let state;
 let currentPropId = null;
 
+// Firebase can return arrays as numeric-keyed objects — convert back + ensure 12 steps
+function normalizeState(s) {
+  if (!s || !s.properties) return;
+  const mietendeFix = { p3: '31.07.2026', p4: '31.08.2026' };
+  s.properties.forEach(p => {
+    // Convert steps object → array if Firebase mangled it
+    if (p.steps && !Array.isArray(p.steps)) p.steps = Object.values(p.steps);
+    if (!Array.isArray(p.steps)) p.steps = [];
+    while (p.steps.length < 12) p.steps.push({ done: false, ts: '' });
+    // Convert termine object → array if needed
+    if (p.termine && !Array.isArray(p.termine)) p.termine = Object.values(p.termine);
+    if (!Array.isArray(p.termine)) p.termine = [];
+    // Migrate old 'unbekannt' dates
+    if (mietendeFix[p.id] && p.mietende === 'unbekannt') p.mietende = mietendeFix[p.id];
+  });
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       state = JSON.parse(raw);
-      // Migrate: fill in mietende dates that were previously 'unbekannt'
-      const mietendeFix = { p3: '31.07.2026', p4: '31.08.2026' };
-      state.properties.forEach(p => {
-        while (p.steps.length < 12) p.steps.push({ done: false, ts: '' });
-        if (mietendeFix[p.id] && p.mietende === 'unbekannt') p.mietende = mietendeFix[p.id];
-      });
+      normalizeState(state);
       saveState();
     } else {
       state = defaultState();
