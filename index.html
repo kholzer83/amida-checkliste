@@ -6,16 +6,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Amida">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="theme-color" content="#2b2b2b">
   <link rel="manifest" href="manifest.json">
   <title>Amida Vermietung</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --blue: #2563eb;
-      --blue-light: #eff6ff;
-      --blue-mid: #dbeafe;
+      --anthracite: #2b2b2b;
+      --blue: #4f68e8;
+      --blue-light: #eef0ff;
       --slate-50: #f8fafc;
       --slate-100: #f1f5f9;
       --slate-200: #e2e8f0;
@@ -47,10 +47,10 @@
 
     /* ── Header ── */
     .app-header {
-      background: var(--blue);
+      background: var(--anthracite);
       color: white;
-      padding: 16px 20px;
-      padding-top: calc(16px + env(safe-area-inset-top));
+      padding: 14px 20px;
+      padding-top: calc(14px + env(safe-area-inset-top));
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -58,13 +58,36 @@
       top: 0;
       z-index: 100;
     }
-    .app-header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; }
-    .app-header .date { font-size: .85rem; opacity: .85; }
+
+    /* AMIDA logo typography */
+    .logo-amida {
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      line-height: 1;
+      color: white;
+    }
+    .logo-sub {
+      font-size: .72rem;
+      letter-spacing: .04em;
+      opacity: .55;
+      margin-top: 4px;
+      color: white;
+    }
+    .logo-amida-sm {
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      color: white;
+      text-align: right;
+      line-height: 1;
+    }
+
     .back-btn {
-      background: rgba(255,255,255,.2);
+      background: rgba(255,255,255,.15);
       border: none;
       color: white;
-      font-size: .9rem;
+      font-size: .88rem;
       font-weight: 600;
       padding: 8px 14px;
       border-radius: 8px;
@@ -75,7 +98,7 @@
       gap: 6px;
       -webkit-tap-highlight-color: transparent;
     }
-    .back-btn:active { background: rgba(255,255,255,.35); }
+    .back-btn:active { background: rgba(255,255,255,.28); }
 
     /* ── Screens ── */
     .screen { display: none; }
@@ -93,10 +116,10 @@
       margin-bottom: 12px;
     }
     .card-title {
-      font-size: .8rem;
+      font-size: .78rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .06em;
+      letter-spacing: .07em;
       color: var(--slate-500);
       margin-bottom: 12px;
     }
@@ -116,30 +139,31 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--blue);
+      background: var(--prop-accent, var(--blue));
       flex-shrink: 0;
       margin-top: 5px;
     }
     .termin-prop {
-      font-size: .75rem;
+      font-size: .73rem;
       color: var(--slate-400);
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: .02em;
     }
     .no-termine { color: var(--slate-400); font-size: .9rem; font-style: italic; }
 
     /* ── Property cards on dashboard ── */
     .property-card {
-      background: white;
+      background: var(--prop-bg, white);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 16px;
+      padding: 16px 16px 16px 18px;
       margin-bottom: 12px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       transition: box-shadow .15s;
-      border: 1.5px solid transparent;
+      border-left: 4px solid var(--prop-accent, var(--slate-300));
     }
-    .property-card:active { box-shadow: var(--shadow-md); border-color: var(--blue-mid); }
+    .property-card:active { box-shadow: var(--shadow-md); }
     .property-card-header {
       display: flex;
       justify-content: space-between;
@@ -170,13 +194,13 @@
     }
     .progress-bar {
       height: 6px;
-      background: var(--slate-200);
+      background: rgba(0,0,0,.08);
       border-radius: 3px;
       overflow: hidden;
     }
     .progress-fill {
       height: 100%;
-      background: var(--blue);
+      background: var(--prop-accent, var(--blue));
       border-radius: 3px;
       transition: width .3s ease;
     }
@@ -184,7 +208,7 @@
     .next-step {
       font-size: .88rem;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--prop-accent, var(--blue));
       margin-top: 8px;
     }
 
@@ -223,7 +247,7 @@
       background: var(--slate-50);
       transition: border-color .15s;
     }
-    .note-area:focus { outline: none; border-color: var(--blue); background: white; }
+    .note-area:focus { outline: none; border-color: var(--prop-accent, var(--blue)); background: white; }
 
     /* ── Termine in detail ── */
     .termin-row {
@@ -258,10 +282,7 @@
       margin-top: 10px;
       flex-wrap: wrap;
     }
-    .termin-input-datum {
-      width: 130px;
-      flex-shrink: 0;
-    }
+    .termin-input-datum { width: 130px; flex-shrink: 0; }
     .termin-input-desc { flex: 1; min-width: 150px; }
     .termin-inputs input {
       border: 1.5px solid var(--slate-200);
@@ -274,9 +295,9 @@
       width: 100%;
       transition: border-color .15s;
     }
-    .termin-inputs input:focus { outline: none; border-color: var(--blue); background: white; }
+    .termin-inputs input:focus { outline: none; border-color: var(--prop-accent, var(--blue)); background: white; }
     .add-btn {
-      background: var(--blue);
+      background: var(--prop-accent, var(--blue));
       color: white;
       border: none;
       border-radius: 8px;
@@ -288,7 +309,7 @@
       white-space: nowrap;
       -webkit-tap-highlight-color: transparent;
     }
-    .add-btn:active { background: #1d4ed8; }
+    .add-btn:active { filter: brightness(.9); }
 
     /* ── Checklist steps ── */
     .step-list { list-style: none; }
@@ -316,8 +337,8 @@
       transition: border-color .15s, background .15s;
     }
     .step-checkbox:checked {
-      background: var(--blue);
-      border-color: var(--blue);
+      background: var(--prop-accent, var(--blue));
+      border-color: var(--prop-accent, var(--blue));
     }
     .step-checkbox:checked::after {
       content: '';
@@ -333,38 +354,18 @@
     }
 
     .step-body { flex: 1; min-width: 0; }
-    .step-name {
-      font-size: .92rem;
-      color: var(--slate-700);
-      line-height: 1.4;
-    }
-    .step-item.done .step-name {
-      text-decoration: line-through;
-      color: var(--slate-400);
-    }
-    .step-item.active .step-name {
-      font-weight: 700;
-      color: var(--blue);
-    }
-    .step-num {
-      font-size: .72rem;
-      font-weight: 700;
-      color: var(--slate-400);
-      margin-bottom: 1px;
-    }
-    .step-item.active .step-num { color: var(--blue); }
-    .step-ts {
-      font-size: .72rem;
-      color: var(--slate-400);
-      margin-top: 3px;
-      display: none;
-    }
+    .step-name { font-size: .92rem; color: var(--slate-700); line-height: 1.4; }
+    .step-item.done .step-name { text-decoration: line-through; color: var(--slate-400); }
+    .step-item.active .step-name { font-weight: 700; color: var(--prop-accent, var(--blue)); }
+    .step-num { font-size: .72rem; font-weight: 700; color: var(--slate-400); margin-bottom: 1px; }
+    .step-item.active .step-num { color: var(--prop-accent, var(--blue)); }
+    .step-ts { font-size: .72rem; color: var(--slate-400); margin-top: 3px; display: none; }
     .step-item.done .step-ts { display: block; }
 
     .active-pill {
       display: inline-block;
-      background: var(--blue-light);
-      color: var(--blue);
+      background: var(--prop-pill, var(--blue-light));
+      color: var(--prop-accent, var(--blue));
       font-size: .7rem;
       font-weight: 700;
       padding: 2px 8px;
@@ -391,10 +392,10 @@
 
     /* ── Section label ── */
     .section-label {
-      font-size: .8rem;
+      font-size: .78rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .06em;
+      letter-spacing: .07em;
       color: var(--slate-500);
       margin-bottom: 8px;
       display: flex;
@@ -402,14 +403,15 @@
       gap: 6px;
     }
 
-    /* ── Urgency text ── */
+    /* ── Urgency ── */
     .urgency-text {
       font-size: .78rem;
       font-weight: 600;
       padding: 3px 8px;
       border-radius: 20px;
+      white-space: nowrap;
     }
-    .urgency-red { background: #fef2f2; color: var(--red); }
+    .urgency-red   { background: #fef2f2; color: var(--red); }
     .urgency-amber { background: #fffbeb; color: var(--amber); }
     .urgency-green { background: #f0fdf4; color: var(--green); }
 
@@ -434,7 +436,7 @@
       bottom: calc(24px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%) translateY(20px);
-      background: var(--slate-800);
+      background: var(--anthracite);
       color: white;
       padding: 10px 20px;
       border-radius: 8px;
@@ -447,7 +449,6 @@
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Scrollable ── */
     #screen-detail { padding-bottom: 32px; }
   </style>
 </head>
@@ -457,8 +458,8 @@
 <div id="screen-dashboard" class="screen active">
   <header class="app-header">
     <div>
-      <h1>Amida Vermietung</h1>
-      <div class="date" id="header-date"></div>
+      <div class="logo-amida">AMIDA</div>
+      <div class="logo-sub">Vermietung &nbsp;·&nbsp; <span id="header-date"></span></div>
     </div>
   </header>
   <div class="content">
@@ -474,9 +475,12 @@
 <div id="screen-detail" class="screen">
   <header class="app-header">
     <button class="back-btn" onclick="showDashboard()">← Übersicht</button>
-    <div class="date" id="detail-header-date"></div>
+    <div style="text-align:right">
+      <div class="logo-amida-sm">AMIDA</div>
+      <div class="logo-sub" id="detail-header-date"></div>
+    </div>
   </header>
-  <div class="content">
+  <div class="content" id="detail-content">
 
     <!-- Meta info -->
     <div class="card" id="detail-meta-card">
@@ -544,6 +548,7 @@
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'amida-checkliste-v1';
+
 const STEPS = [
   'Inserat erstellen',
   'Inserat schalten',
@@ -558,6 +563,21 @@ const STEPS = [
   'Rücknahme Altmieter koordinieren',
   'Übergabe neuer Mieter koordinieren'
 ];
+
+// Pastel color palette per property
+const PROP_COLORS = {
+  p1: { bg: '#eef0ff', accent: '#4f68e8', pill: '#e2e6ff' },  // Periwinkle
+  p2: { bg: '#eaf6f1', accent: '#2aaa78', pill: '#cceee0' },  // Sage
+  p3: { bg: '#fff4ee', accent: '#e07540', pill: '#ffdece' },  // Apricot
+  p4: { bg: '#f4eeff', accent: '#8b5cf6', pill: '#e5d7ff' }   // Lavender
+};
+
+function applyColors(el, propId) {
+  const c = PROP_COLORS[propId] || {};
+  if (c.bg)     el.style.setProperty('--prop-bg',     c.bg);
+  if (c.accent) el.style.setProperty('--prop-accent', c.accent);
+  if (c.pill)   el.style.setProperty('--prop-pill',   c.pill);
+}
 
 // ── Default data ───────────────────────────────────────────────────────────
 function defaultState() {
@@ -638,7 +658,6 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       state = JSON.parse(raw);
-      // Ensure all properties have 12 steps
       state.properties.forEach(p => {
         while (p.steps.length < 12) p.steps.push({ done: false, ts: '' });
       });
@@ -659,37 +678,24 @@ function saveState() {
 // ── Helpers ────────────────────────────────────────────────────────────────
 function todayStr() {
   const d = new Date();
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  return `${dd}.${mm}.${yyyy}`;
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
 }
 
 function nowTs() {
   const d = new Date();
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2,'0');
-  const min = String(d.getMinutes()).padStart(2,'0');
-  return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
 function parseDateDE(str) {
-  // Parse DD.MM.YYYY
   const parts = str.trim().split('.');
-  if (parts.length === 3) {
-    return new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
-  }
+  if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
   return null;
 }
 
 function daysUntil(dateStr) {
   const d = parseDateDE(dateStr);
   if (!d) return null;
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  d.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0); d.setHours(0,0,0,0);
   return Math.round((d - today) / 86400000);
 }
 
@@ -701,16 +707,10 @@ function urgencyFor(p) {
   return { emoji: '🟢', cls: 'urgency-green', label: `${days}d` };
 }
 
-function countDone(p) {
-  return p.steps.filter(s => s.done).length;
-}
-
-function nextStepIndex(p) {
-  return p.steps.findIndex(s => !s.done);
-}
+function countDone(p) { return p.steps.filter(s => s.done).length; }
+function nextStepIndex(p) { return p.steps.findIndex(s => !s.done); }
 
 function shortAddress(addr) {
-  // e.g. "1020 Wien, Zirkusgasse 11 Top 3" → "Zirkusgasse 11/3"
   const m = addr.match(/,\s*(.+?)\s+(\d+)\s+Top\s+(\d+)/i);
   if (m) return `${m[1]} ${m[2]}/T${m[3]}`;
   return addr.split(',')[1]?.trim() || addr;
@@ -723,8 +723,12 @@ function showToast(msg) {
   setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-function getProp(id) {
-  return state.properties.find(p => p.id === id);
+function getProp(id) { return state.properties.find(p => p.id === id); }
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -747,12 +751,11 @@ function showDetail(propId) {
 function renderDashboard() {
   document.getElementById('header-date').textContent = todayStr();
 
-  // Collect & sort all termine
+  // Termine – collect from all properties, carry the property accent color
   const allTermine = [];
   state.properties.forEach(p => {
-    p.termine.forEach(t => {
-      allTermine.push({ text: t, propShort: shortAddress(p.address), propId: p.id });
-    });
+    const accent = (PROP_COLORS[p.id] || {}).accent || '#4f68e8';
+    p.termine.forEach(t => allTermine.push({ text: t, propShort: shortAddress(p.address), accent }));
   });
 
   const ul = document.getElementById('dashboard-termine');
@@ -763,12 +766,11 @@ function renderDashboard() {
     allTermine.forEach(t => {
       const li = document.createElement('li');
       li.innerHTML = `
-        <span class="termin-dot"></span>
+        <span class="termin-dot" style="background:${t.accent}"></span>
         <div>
           <div class="termin-prop">${escHtml(t.propShort)}</div>
           <div>${escHtml(t.text)}</div>
-        </div>
-      `;
+        </div>`;
       ul.appendChild(li);
     });
   }
@@ -785,6 +787,7 @@ function renderDashboard() {
 
     const card = document.createElement('div');
     card.className = 'property-card';
+    applyColors(card, p.id);
     card.onclick = () => showDetail(p.id);
     card.innerHTML = `
       <div class="property-card-header">
@@ -798,8 +801,7 @@ function renderDashboard() {
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>
-      <div class="next-step">→ ${escHtml(nextName)}</div>
-    `;
+      <div class="next-step">→ ${escHtml(nextName)}</div>`;
     container.appendChild(card);
   });
 }
@@ -807,6 +809,15 @@ function renderDashboard() {
 // ── Detail render ──────────────────────────────────────────────────────────
 function renderDetail(propId) {
   const p = getProp(propId);
+
+  // Apply property colors to entire detail content area
+  const content = document.getElementById('detail-content');
+  applyColors(content, propId);
+
+  // Tint the meta card with the property pastel
+  const metaCard = document.getElementById('detail-meta-card');
+  metaCard.style.background = (PROP_COLORS[propId] || {}).bg || 'white';
+
   document.getElementById('detail-header-date').textContent = todayStr();
   document.getElementById('detail-address').textContent = p.address;
   document.getElementById('detail-mietende').textContent = p.mietende;
@@ -822,18 +833,11 @@ function renderDetail(propId) {
   document.getElementById('detail-progress-text').textContent = `${done}/12 Schritte abgeschlossen`;
   document.getElementById('detail-progress-fill').style.width = pct + '%';
 
-  // Note
   const noteEl = document.getElementById('detail-note');
   noteEl.value = p.note || '';
-  noteEl.onblur = () => {
-    p.note = noteEl.value;
-    saveState();
-  };
+  noteEl.onblur = () => { p.note = noteEl.value; saveState(); };
 
-  // Termine
   renderDetailTermine(p);
-
-  // Steps
   renderDetailSteps(p);
 }
 
@@ -846,14 +850,10 @@ function renderDetailTermine(p) {
     p.termine.forEach((t, i) => {
       const row = document.createElement('div');
       row.className = 'termin-row';
-      row.innerHTML = `
-        <span>${escHtml(t)}</span>
-        <button class="del-btn" onclick="deleteTermin(${i})" title="Löschen">×</button>
-      `;
+      row.innerHTML = `<span>${escHtml(t)}</span><button class="del-btn" onclick="deleteTermin(${i})" title="Löschen">×</button>`;
       container.appendChild(row);
     });
   }
-  // Clear inputs
   document.getElementById('termin-datum').value = '';
   document.getElementById('termin-desc').value = '';
 }
@@ -873,10 +873,8 @@ function renderDetailSteps(p) {
         <div class="step-num">Schritt ${i+1}${isActive ? '<span class="active-pill">Aktuell</span>' : ''}</div>
         <div class="step-name">${escHtml(STEPS[i])}</div>
         <div class="step-ts">${s.ts ? `✓ Erledigt am ${escHtml(s.ts)}` : ''}</div>
-      </div>
-    `;
-    const cb = li.querySelector('.step-checkbox');
-    cb.onchange = () => toggleStep(i, cb.checked);
+      </div>`;
+    li.querySelector('.step-checkbox').onchange = e => toggleStep(i, e.target.checked);
     ul.appendChild(li);
   });
 }
@@ -888,12 +886,11 @@ function toggleStep(idx, checked) {
   p.steps[idx].ts = checked ? nowTs() : '';
   saveState();
   renderDetail(currentPropId);
-  // Also refresh progress on dashboard (background)
 }
 
 function addTermin() {
   const datum = document.getElementById('termin-datum').value.trim();
-  const desc = document.getElementById('termin-desc').value.trim();
+  const desc  = document.getElementById('termin-desc').value.trim();
   if (!datum && !desc) { showToast('Bitte Datum und Beschreibung eingeben'); return; }
   const text = datum && desc ? `${datum} – ${desc}` : datum || desc;
   const p = getProp(currentPropId);
@@ -919,20 +916,9 @@ function resetProperty() {
   showToast('Fortschritt zurückgesetzt');
 }
 
-// ── Enter on termin inputs ─────────────────────────────────────────────────
 document.getElementById('termin-desc').addEventListener('keydown', e => {
   if (e.key === 'Enter') addTermin();
 });
-
-// ── Security: HTML escape ──────────────────────────────────────────────────
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadState();
