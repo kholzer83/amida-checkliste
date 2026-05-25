@@ -749,16 +749,22 @@ function defaultState() {
 let state;
 let currentPropId = null;
 
-// Firebase can return arrays as numeric-keyed objects — convert back + ensure 12 steps
+// Firebase can return any array as numeric-keyed object — convert everything back
 function normalizeState(s) {
-  if (!s || !s.properties) return;
+  if (!s) return;
+  // Fix properties array itself (most critical)
+  if (s.properties && !Array.isArray(s.properties)) s.properties = Object.values(s.properties);
+  if (!Array.isArray(s.properties) || s.properties.length === 0) {
+    s.properties = defaultState().properties; return;
+  }
   const mietendeFix = { p3: '31.07.2026', p4: '31.08.2026' };
   s.properties.forEach(p => {
-    // Convert steps object → array if Firebase mangled it
+    if (!p) return;
+    // Fix steps array
     if (p.steps && !Array.isArray(p.steps)) p.steps = Object.values(p.steps);
     if (!Array.isArray(p.steps)) p.steps = [];
     while (p.steps.length < 12) p.steps.push({ done: false, ts: '' });
-    // Convert termine object → array if needed
+    // Fix termine array
     if (p.termine && !Array.isArray(p.termine)) p.termine = Object.values(p.termine);
     if (!Array.isArray(p.termine)) p.termine = [];
     // Migrate old 'unbekannt' dates
@@ -772,15 +778,17 @@ function loadState() {
     if (raw) {
       state = JSON.parse(raw);
       normalizeState(state);
-      saveState();
+      // Final guard: if properties still broken, reset to defaults
+      if (!Array.isArray(state.properties) || state.properties.length === 0) {
+        state = defaultState();
+      }
     } else {
       state = defaultState();
-      saveState();
     }
   } catch(e) {
     state = defaultState();
-    saveState();
   }
+  saveState();
 }
 
 function saveState() {
@@ -897,6 +905,7 @@ function renderDashboard() {
   // Property cards
   const container = document.getElementById('property-cards');
   container.innerHTML = '';
+  if (!Array.isArray(state.properties)) return;
   state.properties.forEach(p => {
     const done = countDone(p);
     const nextIdx = nextStepIndex(p);
