@@ -9,6 +9,9 @@
   <meta name="theme-color" content="#2b2b2b">
   <link rel="manifest" href="manifest.json">
   <title>Amida Vermietung</title>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -458,6 +461,17 @@
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     #screen-detail { padding-bottom: 32px; }
+
+    /* ── Sync indicator ── */
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fbbf24;
+      flex-shrink: 0;
+      transition: background .5s;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -467,7 +481,10 @@
   <header class="app-header">
     <div>
       <div class="logo-amida">AMIDA</div>
-      <div class="logo-sub">Vermietung &nbsp;·&nbsp; <span id="header-date"></span></div>
+      <div class="logo-sub" style="display:flex;align-items:center;gap:5px;">
+        <span class="sync-dot" title="Verbinde..."></span>
+        Vermietung &nbsp;·&nbsp; <span id="header-date"></span>
+      </div>
     </div>
   </header>
   <div class="content">
@@ -485,7 +502,10 @@
     <button class="back-btn" onclick="showDashboard()">← Übersicht</button>
     <div style="text-align:right">
       <div class="logo-amida-sm">AMIDA</div>
-      <div class="logo-sub" id="detail-header-date"></div>
+      <div class="logo-sub" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;">
+        <span class="sync-dot" title="Verbinde..."></span>
+        <span id="detail-header-date"></span>
+      </div>
     </div>
   </header>
   <div class="content" id="detail-content">
@@ -556,6 +576,73 @@
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'amida-checkliste-v1';
+
+// ── Firebase ───────────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDgzA-IPSI8J4Q2S8KsCGNpBmnjiOBcZXY",
+  authDomain:        "amida-checkliste.firebaseapp.com",
+  databaseURL:       "https://amida-checkliste-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "amida-checkliste",
+  storageBucket:     "amida-checkliste.firebasestorage.app",
+  messagingSenderId: "223213099806",
+  appId:             "1:223213099806:web:bc510bd68cffb06d9f470f"
+};
+
+let fbRef = null;
+let skipNextFbUpdate = false;
+
+function setSyncDot(status) {
+  const color = status === 'online'  ? '#4ade80'
+              : status === 'offline' ? '#f87171'
+              : '#fbbf24'; // syncing
+  const label = status === 'online'  ? 'Synchronisiert'
+              : status === 'offline' ? 'Offline – Änderungen lokal gespeichert'
+              : 'Synchronisiere...';
+  document.querySelectorAll('.sync-dot').forEach(el => {
+    el.style.background = color;
+    el.title = label;
+  });
+}
+
+function renderCurrentView() {
+  if (document.getElementById('screen-dashboard').classList.contains('active')) {
+    renderDashboard();
+  } else if (currentPropId) {
+    renderDetail(currentPropId);
+  }
+}
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    // Real-time sync listener
+    fbRef = db.ref('amida-v1');
+    fbRef.on('value', snap => {
+      if (skipNextFbUpdate) { skipNextFbUpdate = false; return; }
+      const data = snap.val();
+      if (!data) {
+        // Firebase empty on first use – push local state up
+        fbRef.set(state);
+      } else {
+        state = data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        renderCurrentView();
+      }
+      setSyncDot('online');
+    });
+
+    // Online/offline indicator
+    db.ref('.info/connected').on('value', snap => {
+      setSyncDot(snap.val() ? 'online' : 'offline');
+    });
+
+  } catch(e) {
+    console.warn('Firebase init error:', e);
+    setSyncDot('offline');
+  }
+}
 
 const STEPS = [
   'Inserat erstellen',
@@ -685,6 +772,13 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (fbRef) {
+    skipNextFbUpdate = true;
+    setSyncDot('syncing');
+    fbRef.set(state)
+      .then(() => setSyncDot('online'))
+      .catch(e => { skipNextFbUpdate = false; setSyncDot('offline'); console.warn('Firebase sync failed:', e); });
+  }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -938,6 +1032,7 @@ document.getElementById('termin-desc').addEventListener('keydown', e => {
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadState();
 renderDashboard();
+initFirebase();
 </script>
 </body>
 </html>
