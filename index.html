@@ -151,6 +151,14 @@
     }
     .no-termine { color: var(--slate-400); font-size: .9rem; font-style: italic; }
 
+    /* ── Mietende subtitle on dashboard card ── */
+    .prop-mietende {
+      font-size: .76rem;
+      color: var(--slate-500);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
     /* ── Property cards on dashboard ── */
     .property-card {
       background: var(--prop-bg, white);
@@ -630,7 +638,7 @@ function defaultState() {
       {
         id: 'p3',
         address: '1180 Wien, Staudgasse 10 Top 2',
-        mietende: 'unbekannt',
+        mietende: '31.07.2026',
         ziel: '01.08.2026',
         note: 'Inserat erstellen. Kontakt mit aktuellen Mietern für Besichtigungen ab Juni.',
         termine: [],
@@ -639,7 +647,7 @@ function defaultState() {
       {
         id: 'p4',
         address: '1120 Wien, Hetzendorferstraße 155 Top 16',
-        mietende: 'unbekannt',
+        mietende: '31.08.2026',
         ziel: '01.09.2026',
         note: 'Inserat erstellen. Kontakt mit aktuellen Mietern für Besichtigungen ab Juni.',
         termine: [],
@@ -658,9 +666,13 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       state = JSON.parse(raw);
+      // Migrate: fill in mietende dates that were previously 'unbekannt'
+      const mietendeFix = { p3: '31.07.2026', p4: '31.08.2026' };
       state.properties.forEach(p => {
         while (p.steps.length < 12) p.steps.push({ done: false, ts: '' });
+        if (mietendeFix[p.id] && p.mietende === 'unbekannt') p.mietende = mietendeFix[p.id];
       });
+      saveState();
     } else {
       state = defaultState();
       saveState();
@@ -791,7 +803,10 @@ function renderDashboard() {
     card.onclick = () => showDetail(p.id);
     card.innerHTML = `
       <div class="property-card-header">
-        <div class="property-address">${escHtml(p.address)}</div>
+        <div>
+          <div class="property-address">${escHtml(p.address)}</div>
+          <div class="prop-mietende">Ende Mietvertrag: ${escHtml(p.mietende)}</div>
+        </div>
         <span class="urgency-badge" title="Vermietungsziel: ${escHtml(p.ziel)}">${urg.emoji}</span>
       </div>
       <div class="progress-wrap">
