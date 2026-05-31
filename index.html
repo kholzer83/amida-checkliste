@@ -274,13 +274,67 @@
     /* ── Termine in detail ── */
     .termin-row {
       display: flex;
-      align-items: flex-start;
-      gap: 8px;
+      flex-direction: column;
       padding: 8px 0;
       border-bottom: 1px solid var(--slate-100);
     }
     .termin-row:last-of-type { border-bottom: none; }
-    .termin-row span { flex: 1; font-size: .9rem; color: var(--slate-700); }
+    .termin-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .termin-main span { flex: 1; font-size: .9rem; color: var(--slate-700); line-height: 1.4; }
+    .termin-confirm-btn {
+      align-self: flex-start;
+      margin-top: 6px;
+      font-size: .73rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1.5px solid var(--slate-200);
+      background: white;
+      color: var(--slate-400);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .termin-confirm-btn.confirmed {
+      background: #f0fdf4;
+      border-color: #86efac;
+      color: var(--green);
+    }
+    .termin-comment-input {
+      width: 100%;
+      margin-top: 6px;
+      border: 1.5px solid var(--slate-100);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: .83rem;
+      font-family: inherit;
+      color: var(--slate-500);
+      background: transparent;
+      resize: none;
+      min-height: 34px;
+      max-height: 34px;
+      overflow: hidden;
+      transition: border-color .15s, background .15s, max-height .2s;
+      line-height: 1.45;
+    }
+    .termin-comment-input:focus {
+      outline: none;
+      border-color: var(--prop-accent, var(--blue));
+      background: white;
+      max-height: 120px;
+      overflow: auto;
+    }
+    .termin-comment-input.has-content {
+      max-height: 120px;
+      border-color: var(--slate-200);
+      background: var(--slate-50);
+      color: var(--slate-700);
+      overflow: auto;
+    }
     .del-btn {
       background: none;
       border: none;
@@ -872,6 +926,11 @@ function normalizeState(s) {
     // Fix termine array
     if (p.termine && !Array.isArray(p.termine)) p.termine = Object.values(p.termine);
     if (!Array.isArray(p.termine)) p.termine = [];
+    // Normalize termine to rich objects { text, confirmed, comment }
+    p.termine = p.termine.map(t => {
+      if (typeof t === 'string') return { text: t, confirmed: false, comment: '' };
+      return { text: t.text || '', confirmed: t.confirmed || false, comment: t.comment || '' };
+    });
     // Migrate old 'unbekannt' dates
     if (mietendeFix[p.id] && p.mietende === 'unbekannt') p.mietende = mietendeFix[p.id];
   });
@@ -1018,7 +1077,10 @@ function renderDashboard() {
   state.properties.forEach(p => {
     const accent = (PROP_COLORS[p.id] || {}).accent || '#4f68e8';
     const sorted = p.termine
-      .map(t => ({ text: t, propShort: shortAddress(p.address), accent, date: parseTerminDate(t) }))
+      .map(t => {
+        const txt = typeof t === 'string' ? t : t.text;
+        return { text: txt, propShort: shortAddress(p.address), accent, date: parseTerminDate(txt) };
+      })
       .sort((a, b) => a.date - b.date);
     const next = sorted.find(t => t.date >= today);
     if (next) allTermine.push(next);
@@ -1133,14 +1195,33 @@ function renderDetailTermine(p) {
   if (p.termine.length === 0) {
     container.innerHTML = '<div class="no-termine" style="padding:4px 0 8px;">Keine Termine eingetragen</div>';
   } else {
-    // Sort by date for display, but keep original index for deletion
     const sorted = p.termine
-      .map((t, i) => ({ t, i, date: parseTerminDate(t) }))
+      .map((t, i) => ({ t, i, date: parseTerminDate(typeof t === 'string' ? t : t.text) }))
       .sort((a, b) => a.date - b.date);
     sorted.forEach(({ t, i }) => {
+      const isConfirmed = t.confirmed || false;
+      const comment    = t.comment   || '';
       const row = document.createElement('div');
       row.className = 'termin-row';
-      row.innerHTML = `<span>${escHtml(t)}</span><button class="del-btn" onclick="deleteTermin(${i})" title="Löschen">×</button>`;
+      row.innerHTML = `
+        <div class="termin-main">
+          <span>${formatTerminText(t.text, isConfirmed)}</span>
+          <button class="del-btn" onclick="deleteTermin(${i})" title="Löschen">×</button>
+        </div>
+        <button class="termin-confirm-btn${isConfirmed ? ' confirmed' : ''}">
+          ${isConfirmed ? '✓ Bestätigt' : '○ Bestätigen'}
+        </button>
+        <textarea class="termin-comment-input${comment ? ' has-content' : ''}"
+          placeholder="Kommentar zur Besichtigung…">${escHtml(comment)}</textarea>`;
+      row.querySelector('.termin-confirm-btn').addEventListener('click', () => {
+        toggleTerminConfirmed(p.id, i);
+      });
+      const ta = row.querySelector('.termin-comment-input');
+      ta.addEventListener('blur', () => {
+        updateTerminComment(p.id, i, ta.value);
+        if (ta.value.trim()) ta.classList.add('has-content');
+        else ta.classList.remove('has-content');
+      });
       container.appendChild(row);
     });
   }
@@ -1184,7 +1265,7 @@ function addTermin() {
   if (!datum && !desc) { showToast('Bitte Datum und Beschreibung eingeben'); return; }
   const text = datum && desc ? `${datum} – ${desc}` : datum || desc;
   const p = getProp(currentPropId);
-  p.termine.push(text);
+  p.termine.push({ text, confirmed: false, comment: '' });
   saveState();
   renderDetailTermine(p);
   showToast('Termin hinzugefügt');
@@ -1209,6 +1290,32 @@ function resetProperty() {
 document.getElementById('termin-desc').addEventListener('keydown', e => {
   if (e.key === 'Enter') addTermin();
 });
+
+// ── Termin helpers ─────────────────────────────────────────────────────────
+function formatTerminText(text, confirmed) {
+  if (!confirmed) return escHtml(text);
+  // Bold the name: part between em-dash (–) and next hyphen
+  const m = text.match(/^(.*?–\s*)([^-–]+)(\s*-\s*.*)?$/);
+  if (m && m[2]) {
+    return escHtml(m[1]) + '<strong>' + escHtml(m[2].trim()) + '</strong>' + (m[3] ? escHtml(m[3]) : '');
+  }
+  return '<strong>' + escHtml(text) + '</strong>';
+}
+
+function toggleTerminConfirmed(propId, idx) {
+  const p = getProp(propId);
+  if (!p || !p.termine[idx]) return;
+  p.termine[idx].confirmed = !p.termine[idx].confirmed;
+  saveState();
+  renderDetailTermine(p);
+}
+
+function updateTerminComment(propId, idx, text) {
+  const p = getProp(propId);
+  if (!p || !p.termine[idx]) return;
+  p.termine[idx].comment = text.trim();
+  saveState();
+}
 
 // ── ToDo ───────────────────────────────────────────────────────────────────
 function renderTodos() {
