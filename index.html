@@ -484,6 +484,87 @@
       transition: background .5s;
       display: inline-block;
     }
+
+    /* ── ToDo list ── */
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--slate-100);
+    }
+    .todo-item:last-of-type { border-bottom: none; }
+    .todo-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--slate-300);
+      border-radius: 5px;
+      flex-shrink: 0;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background: white;
+      position: relative;
+      transition: border-color .15s, background .15s;
+    }
+    .todo-checkbox:checked {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+    .todo-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 6px;
+      height: 9px;
+      border: 2px solid white;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+    .todo-text {
+      flex: 1;
+      font-size: .9rem;
+      color: var(--slate-700);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .todo-text.done {
+      text-decoration: line-through;
+      color: var(--slate-400);
+    }
+    .todo-add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .todo-add-row input {
+      flex: 1;
+      border: 1.5px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: .88rem;
+      font-family: inherit;
+      color: var(--slate-700);
+      background: var(--slate-50);
+      transition: border-color .15s;
+    }
+    .todo-add-row input:focus { outline: none; border-color: var(--blue); background: white; }
+    .todo-add-btn {
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 44px;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .todo-add-btn:active { filter: brightness(.9); }
   </style>
 </head>
 <body>
@@ -503,6 +584,14 @@
     <div class="card" id="termine-block">
       <div class="card-title">📅 Nächste Termine</div>
       <ul class="termine-list" id="dashboard-termine"></ul>
+    </div>
+    <div class="card" id="todo-block">
+      <div class="card-title">📋 To-Do</div>
+      <div id="todo-list"></div>
+      <div class="todo-add-row">
+        <input type="text" id="todo-input" placeholder="Neue Aufgabe…">
+        <button class="todo-add-btn" onclick="addTodo()">+</button>
+      </div>
     </div>
     <div id="property-cards"></div>
   </div>
@@ -690,6 +779,7 @@ function applyColors(el, propId) {
 // ── Default data ───────────────────────────────────────────────────────────
 function defaultState() {
   return {
+    todos: [],
     properties: [
       {
         id: 'p1',
@@ -764,6 +854,9 @@ let currentPropId = null;
 // Firebase can return any array as numeric-keyed object — convert everything back
 function normalizeState(s) {
   if (!s) return;
+  // Fix todos array
+  if (s.todos && !Array.isArray(s.todos)) s.todos = Object.values(s.todos);
+  if (!Array.isArray(s.todos)) s.todos = [];
   // Fix properties array itself (most critical)
   if (s.properties && !Array.isArray(s.properties)) s.properties = Object.values(s.properties);
   if (!Array.isArray(s.properties) || s.properties.length === 0) {
@@ -949,6 +1042,9 @@ function renderDashboard() {
     });
   }
 
+  // ToDo list
+  renderTodos();
+
   // Property cards
   const container = document.getElementById('property-cards');
   container.innerHTML = '';
@@ -1112,6 +1208,59 @@ function resetProperty() {
 
 document.getElementById('termin-desc').addEventListener('keydown', e => {
   if (e.key === 'Enter') addTermin();
+});
+
+// ── ToDo ───────────────────────────────────────────────────────────────────
+function renderTodos() {
+  const list = document.getElementById('todo-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!state.todos || state.todos.length === 0) {
+    list.innerHTML = '<div class="no-termine" style="padding:4px 0 8px;">Keine Aufgaben – einfach hinzufügen ↓</div>';
+    return;
+  }
+  state.todos.forEach(todo => {
+    const item = document.createElement('div');
+    item.className = 'todo-item';
+    item.innerHTML = `
+      <input type="checkbox" class="todo-checkbox" ${todo.done ? 'checked' : ''}>
+      <span class="todo-text${todo.done ? ' done' : ''}">${escHtml(todo.text)}</span>
+      <button class="del-btn" title="Löschen" data-id="${escHtml(todo.id)}">×</button>`;
+    item.querySelector('.todo-checkbox').onchange = e => toggleTodo(todo.id, e.target.checked);
+    item.querySelector('.del-btn').onclick = () => deleteTodo(todo.id);
+    list.appendChild(item);
+  });
+}
+
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  if (!Array.isArray(state.todos)) state.todos = [];
+  state.todos.push({ id: 't' + Date.now(), text, done: false, ts: '' });
+  saveState();
+  renderTodos();
+  input.value = '';
+  input.focus();
+}
+
+function toggleTodo(id, checked) {
+  const todo = state.todos.find(t => t.id === id);
+  if (!todo) return;
+  todo.done = checked;
+  todo.ts = checked ? nowTs() : '';
+  saveState();
+  renderTodos();
+}
+
+function deleteTodo(id) {
+  state.todos = state.todos.filter(t => t.id !== id);
+  saveState();
+  renderTodos();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.id === 'todo-input' && e.key === 'Enter') addTodo();
 });
 
 // ── Boot ───────────────────────────────────────────────────────────────────
