@@ -906,11 +906,16 @@ function showDetail(propId) {
 function renderDashboard() {
   document.getElementById('header-date').textContent = todayStr();
 
-  // Termine – collect from all properties, sort chronologically
+  // Termine – only the next upcoming termin per property, sorted chronologically
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const allTermine = [];
   state.properties.forEach(p => {
     const accent = (PROP_COLORS[p.id] || {}).accent || '#4f68e8';
-    p.termine.forEach(t => allTermine.push({ text: t, propShort: shortAddress(p.address), accent, date: parseTerminDate(t) }));
+    const sorted = p.termine
+      .map(t => ({ text: t, propShort: shortAddress(p.address), accent, date: parseTerminDate(t) }))
+      .sort((a, b) => a.date - b.date);
+    const next = sorted.find(t => t.date >= today);
+    if (next) allTermine.push(next);
   });
   allTermine.sort((a, b) => a.date - b.date);
 
