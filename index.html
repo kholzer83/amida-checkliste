@@ -422,9 +422,10 @@
       border-radius: 20px;
       white-space: nowrap;
     }
-    .urgency-red   { background: #fef2f2; color: var(--red); }
-    .urgency-amber { background: #fffbeb; color: var(--amber); }
-    .urgency-green { background: #f0fdf4; color: var(--green); }
+    .urgency-red    { background: #fef2f2; color: var(--red); }
+    .urgency-orange { background: #fff7ed; color: #ea580c; }
+    .urgency-amber  { background: #fffbeb; color: var(--amber); }
+    .urgency-green  { background: #f0fdf4; color: var(--green); }
 
     .detail-header-row {
       display: flex;
@@ -855,11 +856,12 @@ function daysUntil(dateStr) {
 }
 
 function urgencyFor(p) {
+  const done = countDone(p);
   const days = daysUntil(p.ziel);
-  if (days === null) return { emoji: '🟢', cls: 'urgency-green', label: 'Kein Datum' };
-  if (days < 30)  return { emoji: '🔴', cls: 'urgency-red',   label: `${days}d` };
-  if (days < 60)  return { emoji: '🟡', cls: 'urgency-amber', label: `${days}d` };
-  return { emoji: '🟢', cls: 'urgency-green', label: `${days}d` };
+  const daysTxt = days !== null ? ` · ${days}d` : '';
+  if (done >= 10) return { emoji: '🟢', cls: 'urgency-green',  label: `${done}/12${daysTxt}` };
+  if (done >= 5)  return { emoji: '🟡', cls: 'urgency-amber',  label: `${done}/12${daysTxt}` };
+  return          { emoji: '🟠', cls: 'urgency-orange', label: `${done}/12${daysTxt}` };
 }
 
 function countDone(p) { return p.steps.filter(s => s.done).length; }
