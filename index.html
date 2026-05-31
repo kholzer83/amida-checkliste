@@ -819,6 +819,34 @@ function parseDateDE(str) {
   return null;
 }
 
+// German month names → number
+const DE_MONATE = {
+  januar:1, februar:2, 'märz':3, maerz:3, april:4, mai:5, juni:6,
+  juli:7, august:8, september:9, oktober:10, november:11, dezember:12,
+  jan:1, feb:2, 'mär':3, mar:3, apr:4, jun:6, jul:7, aug:8, sep:9, okt:10, nov:11, dez:12
+};
+
+// Extract a sortable Date from free-text: "Mi 27.05.", "3. Juni", "Montag, 29. Juni – 17:00"
+function parseTerminDate(str) {
+  const year = new Date().getFullYear();
+  // 1) Try DD.MM.YYYY or DD.MM. (classic numeric format)
+  let m = str.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})?/);
+  if (m) {
+    const mo = parseInt(m[2]);
+    if (mo >= 1 && mo <= 12) return new Date(m[3] ? parseInt(m[3]) : year, mo - 1, parseInt(m[1]));
+  }
+  // 2) Try "DD. MonatName" or "DD MonatName" (e.g. "3. Juni", "29. Juni")
+  const lower = str.toLowerCase();
+  const months = Object.keys(DE_MONATE).join('|');
+  const re = new RegExp(`(\\d{1,2})\\.?\\s+(${months})`, 'i');
+  m = lower.match(re);
+  if (m) {
+    const mo = DE_MONATE[m[2]];
+    if (mo) return new Date(year, mo - 1, parseInt(m[1]));
+  }
+  return new Date(9999, 11, 31); // no date found → sort to end
+}
+
 function daysUntil(dateStr) {
   const d = parseDateDE(dateStr);
   if (!d) return null;
@@ -878,12 +906,13 @@ function showDetail(propId) {
 function renderDashboard() {
   document.getElementById('header-date').textContent = todayStr();
 
-  // Termine – collect from all properties, carry the property accent color
+  // Termine – collect from all properties, sort chronologically
   const allTermine = [];
   state.properties.forEach(p => {
     const accent = (PROP_COLORS[p.id] || {}).accent || '#4f68e8';
-    p.termine.forEach(t => allTermine.push({ text: t, propShort: shortAddress(p.address), accent }));
+    p.termine.forEach(t => allTermine.push({ text: t, propShort: shortAddress(p.address), accent, date: parseTerminDate(t) }));
   });
+  allTermine.sort((a, b) => a.date - b.date);
 
   const ul = document.getElementById('dashboard-termine');
   ul.innerHTML = '';
@@ -978,7 +1007,11 @@ function renderDetailTermine(p) {
   if (p.termine.length === 0) {
     container.innerHTML = '<div class="no-termine" style="padding:4px 0 8px;">Keine Termine eingetragen</div>';
   } else {
-    p.termine.forEach((t, i) => {
+    // Sort by date for display, but keep original index for deletion
+    const sorted = p.termine
+      .map((t, i) => ({ t, i, date: parseTerminDate(t) }))
+      .sort((a, b) => a.date - b.date);
+    sorted.forEach(({ t, i }) => {
       const row = document.createElement('div');
       row.className = 'termin-row';
       row.innerHTML = `<span>${escHtml(t)}</span><button class="del-btn" onclick="deleteTermin(${i})" title="Löschen">×</button>`;
