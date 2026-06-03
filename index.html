@@ -576,6 +576,114 @@
       display: inline-block;
     }
 
+    /* ── Mietanbot ── */
+    .anbot-item {
+      background: var(--slate-50);
+      border: 1.5px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .anbot-item:last-of-type { margin-bottom: 0; }
+    .anbot-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .anbot-name-input {
+      flex: 1;
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--slate-800);
+      border: none;
+      background: transparent;
+      border-bottom: 1.5px solid transparent;
+      padding: 0 0 1px 0;
+      font-family: inherit;
+      min-width: 0;
+      transition: border-color .15s;
+    }
+    .anbot-name-input:focus { outline: none; border-bottom-color: var(--prop-accent, var(--blue)); }
+    .anbot-name-input::placeholder { color: var(--slate-400); font-weight: 400; }
+    .anbot-field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .anbot-field, .anbot-field-full { display: flex; flex-direction: column; gap: 2px; }
+    .anbot-field-full { margin-bottom: 8px; }
+    .anbot-field label, .anbot-field-full label {
+      font-size: .67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--slate-400);
+    }
+    .anbot-item input[type="text"],
+    .anbot-item input[type="email"] {
+      font-size: .85rem;
+      color: var(--slate-700);
+      border: none;
+      background: transparent;
+      border-bottom: 1.5px solid transparent;
+      padding: 1px 0;
+      font-family: inherit;
+      width: 100%;
+      transition: border-color .15s;
+    }
+    .anbot-item input:focus { outline: none; border-bottom-color: var(--prop-accent, var(--blue)); }
+    .anbot-item input::placeholder { color: var(--slate-400); }
+    .anbot-feedback {
+      width: 100%;
+      border: 1.5px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: .83rem;
+      font-family: inherit;
+      color: var(--slate-700);
+      background: white;
+      resize: none;
+      min-height: 56px;
+      transition: border-color .15s;
+    }
+    .anbot-feedback:focus { outline: none; border-color: var(--prop-accent, var(--blue)); }
+    .anbot-feedback::placeholder { color: var(--slate-400); }
+    .add-anbot-btn {
+      width: 100%;
+      background: none;
+      border: 1.5px dashed var(--slate-300);
+      color: var(--prop-accent, var(--blue));
+      border-radius: 8px;
+      padding: 10px;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color .15s, background .15s;
+    }
+    .add-anbot-btn:active { background: var(--blue-light); }
+    .add-anbot-form { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .add-anbot-form input {
+      border: 1.5px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: .88rem;
+      font-family: inherit;
+      color: var(--slate-700);
+      background: var(--slate-50);
+      width: 100%;
+      transition: border-color .15s;
+    }
+    .add-anbot-form input:focus { outline: none; border-color: var(--prop-accent, var(--blue)); background: white; }
+    .add-anbot-form .add-prop-row { display: flex; gap: 8px; }
+    .add-anbot-form .add-prop-row input { flex: 1; }
+    .add-anbot-actions { display: flex; gap: 8px; }
+    .add-anbot-actions .add-btn { flex: 1; }
+
     /* ── Add Property form ── */
     .add-prop-toggle {
       width: 100%;
@@ -822,6 +930,25 @@
       </div>
     </div>
 
+    <!-- Mietanbote -->
+    <div class="card">
+      <div class="section-label">📄 Mietanbote</div>
+      <div id="detail-anbote-list"></div>
+      <button class="add-anbot-btn" onclick="toggleAddAnotForm()">＋ Anbot hinzufügen</button>
+      <div class="add-anbot-form" id="add-anbot-form" style="display:none">
+        <input type="text"  id="anbot-name"      placeholder="Name Interessent">
+        <input type="email" id="anbot-email"     placeholder="E-Mail Adresse">
+        <div class="add-prop-row">
+          <input type="text" id="anbot-versendet" placeholder="Versendet am (TT.MM.JJJJ)">
+          <input type="text" id="anbot-gueltig"   placeholder="Gültig bis (TT.MM.JJJJ)">
+        </div>
+        <div class="add-anbot-actions">
+          <button class="add-btn" onclick="addAnbot()">Hinzufügen</button>
+          <button class="add-prop-cancel" onclick="toggleAddAnotForm()">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Checklist -->
     <div class="card">
       <div class="section-label">✅ Prozessschritte</div>
@@ -964,6 +1091,7 @@ function defaultState() {
         ziel: '01.07.2026',
         flaeche: '',
         bruttomiete: '',
+        anbote: [],
         note: 'Mietanbot erhalten – prüfen & freigeben.',
         termine: ['Mi 27.05. – Rückstellungsvorbesprechung Mieter & Eigentümer'],
         steps: [
@@ -988,6 +1116,7 @@ function defaultState() {
         ziel: '01.07.2026',
         flaeche: '',
         bruttomiete: '',
+        anbote: [],
         note: 'Besichtigungen laufen. Rückgabe Altmieter koordinieren.',
         termine: ['Di 26.05. 17:30–18:00 – Besichtigungen'],
         steps: [
@@ -1012,6 +1141,7 @@ function defaultState() {
         ziel: '01.08.2026',
         flaeche: '',
         bruttomiete: '',
+        anbote: [],
         note: 'Inserat erstellen. Kontakt mit aktuellen Mietern für Besichtigungen ab Juni.',
         termine: [],
         steps: Array.from({length: 12}, () => ({ done: false, ts: '' }))
@@ -1023,6 +1153,7 @@ function defaultState() {
         ziel: '01.09.2026',
         flaeche: '',
         bruttomiete: '',
+        anbote: [],
         note: 'Inserat erstellen. Kontakt mit aktuellen Mietern für Besichtigungen ab Juni.',
         termine: [],
         steps: Array.from({length: 12}, () => ({ done: false, ts: '' }))
@@ -1062,8 +1193,19 @@ function normalizeState(s) {
       return { text: t.text || '', confirmed: t.confirmed || false, comment: t.comment || '' };
     });
     // Ensure new fields exist
-    if (p.flaeche    === undefined) p.flaeche    = '';
+    if (p.flaeche     === undefined) p.flaeche     = '';
     if (p.bruttomiete === undefined) p.bruttomiete = '';
+    // Fix anbote array
+    if (p.anbote && !Array.isArray(p.anbote)) p.anbote = Object.values(p.anbote);
+    if (!Array.isArray(p.anbote)) p.anbote = [];
+    p.anbote = p.anbote.map(a => ({
+      id:          a.id          || ('a' + Math.random()),
+      name:        a.name        || '',
+      email:       a.email       || '',
+      versendetAm: a.versendetAm || '',
+      gueltigBis:  a.gueltigBis  || '',
+      feedback:    a.feedback    || ''
+    }));
     // Migrate old 'unbekannt' dates
     if (mietendeFix[p.id] && p.mietende === 'unbekannt') p.mietende = mietendeFix[p.id];
   });
@@ -1338,6 +1480,7 @@ function renderDetail(propId) {
   noteEl.onblur = () => { p.note = noteEl.value; saveState(); };
 
   renderDetailTermine(p);
+  renderDetailAnbote(p);
   renderDetailSteps(p);
 }
 
@@ -1483,6 +1626,101 @@ function deleteProperty() {
   saveState();
   showDashboard();
   showToast('Liegenschaft gelöscht');
+}
+
+// ── Mietanbot ─────────────────────────────────────────────────────────────
+function renderDetailAnbote(p) {
+  const container = document.getElementById('detail-anbote-list');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!p.anbote || p.anbote.length === 0) {
+    container.innerHTML = '<div class="no-termine" style="padding:4px 0 6px;">Noch keine Mietanbote erfasst</div>';
+    return;
+  }
+  p.anbote.forEach((a, i) => {
+    const item = document.createElement('div');
+    item.className = 'anbot-item';
+    item.innerHTML = `
+      <div class="anbot-header">
+        <input class="anbot-name-input" type="text" value="${escHtml(a.name)}" placeholder="Name Interessent…">
+        <button class="del-btn" title="Anbot löschen">×</button>
+      </div>
+      <div class="anbot-field-full">
+        <label>E-Mail</label>
+        <input type="email" value="${escHtml(a.email)}" placeholder="E-Mail Adresse">
+      </div>
+      <div class="anbot-field-row">
+        <div class="anbot-field">
+          <label>Versendet am</label>
+          <input type="text" value="${escHtml(a.versendetAm)}" placeholder="TT.MM.JJJJ">
+        </div>
+        <div class="anbot-field">
+          <label>Gültig bis</label>
+          <input type="text" value="${escHtml(a.gueltigBis)}" placeholder="TT.MM.JJJJ">
+        </div>
+      </div>
+      <div class="anbot-field-full">
+        <label>Feedback Mieter</label>
+        <textarea class="anbot-feedback" placeholder="Rückmeldung, Entscheidung, Notizen…">${escHtml(a.feedback)}</textarea>
+      </div>`;
+
+    const fields = [
+      { el: item.querySelector('.anbot-name-input'),              key: 'name'        },
+      { el: item.querySelectorAll('input')[1],                    key: 'email'       },
+      { el: item.querySelectorAll('input')[2],                    key: 'versendetAm' },
+      { el: item.querySelectorAll('input')[3],                    key: 'gueltigBis'  },
+      { el: item.querySelector('.anbot-feedback'),                key: 'feedback'    },
+    ];
+    fields.forEach(({ el, key }) => {
+      el.addEventListener('blur', () => { updateAnotField(p.id, i, key, el.value.trim()); });
+    });
+    item.querySelector('.del-btn').addEventListener('click', () => deleteAnbot(p.id, i));
+    container.appendChild(item);
+  });
+}
+
+function toggleAddAnotForm() {
+  const form = document.getElementById('add-anbot-form');
+  const open = form.style.display !== 'none';
+  form.style.display = open ? 'none' : 'block';
+  if (!open) {
+    ['anbot-name','anbot-email','anbot-versendet','anbot-gueltig']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('anbot-name').focus();
+  }
+}
+
+function addAnbot() {
+  const name = document.getElementById('anbot-name').value.trim();
+  if (!name) { showToast('Bitte Name eingeben'); document.getElementById('anbot-name').focus(); return; }
+  const p = getProp(currentPropId);
+  p.anbote.push({
+    id:          'a' + Date.now(),
+    name,
+    email:       document.getElementById('anbot-email').value.trim(),
+    versendetAm: document.getElementById('anbot-versendet').value.trim(),
+    gueltigBis:  document.getElementById('anbot-gueltig').value.trim(),
+    feedback:    ''
+  });
+  saveState();
+  toggleAddAnotForm();
+  renderDetailAnbote(p);
+  showToast('Mietanbot hinzugefügt ✓');
+}
+
+function deleteAnbot(propId, idx) {
+  if (!confirm('Diesen Mietanbot löschen?')) return;
+  const p = getProp(propId);
+  p.anbote.splice(idx, 1);
+  saveState();
+  renderDetailAnbote(p);
+}
+
+function updateAnotField(propId, idx, field, value) {
+  const p = getProp(propId);
+  if (!p || !p.anbote[idx]) return;
+  p.anbote[idx][field] = value;
+  saveState();
 }
 
 // ── Termin helpers ─────────────────────────────────────────────────────────
