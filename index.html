@@ -514,6 +514,8 @@
     .urgency-amber  { background: #fffbeb; color: var(--amber); }
     .urgency-green  { background: #f0fdf4; color: var(--green); }
     .urgency-blue   { background: #dbeafe; color: #2563eb; }
+    .urgency-slate  { background: #f1f5f9; color: #475569; }
+    .urgency-violet { background: #ede9fe; color: #6d28d9; }
 
     .detail-header-row {
       display: flex;
@@ -1087,8 +1089,8 @@ function getPhaseForProp(p) {
   if (i === -1)  return { bg: '#dcfce7', accent: '#16a34a', pill: '#86efac', label: '✓ Fertig',      cls: 'urgency-green'  };
   if (i >= 8)    return { bg: '#dcfce7', accent: '#16a34a', pill: '#86efac', label: 'Mietvertrag',   cls: 'urgency-green'  };
   if (i >= 4)    return { bg: '#fef9c3', accent: '#ca8a04', pill: '#fde047', label: 'Mietanbot',     cls: 'urgency-amber'  };
-  if (i >= 2)    return { bg: '#ffedd5', accent: '#f97316', pill: '#fdba74', label: 'Besichtigung',  cls: 'urgency-orange' };
-  return         { bg: '#dbeafe', accent: '#2563eb', pill: '#93c5fd', label: 'Inserat',      cls: 'urgency-blue'   };
+  if (i >= 2)    return { bg: '#ddd6fe', accent: '#7c3aed', pill: '#c4b5fd', label: 'Besichtigung', cls: 'urgency-violet' };
+  return         { bg: '#ede9fe', accent: '#6d28d9', pill: '#a78bfa', label: 'Inserat',      cls: 'urgency-violet' };
 }
 
 function applyColors(el, p) {
