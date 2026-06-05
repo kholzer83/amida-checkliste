@@ -513,6 +513,7 @@
     .urgency-orange { background: #fff7ed; color: #ea580c; }
     .urgency-amber  { background: #fffbeb; color: var(--amber); }
     .urgency-green  { background: #f0fdf4; color: var(--green); }
+    .urgency-blue   { background: #dbeafe; color: #2563eb; }
 
     .detail-header-row {
       display: flex;
@@ -684,6 +685,30 @@
     .add-anbot-form .add-prop-row input { flex: 1; }
     .add-anbot-actions { display: flex; gap: 8px; }
     .add-anbot-actions .add-btn { flex: 1; }
+
+    /* ── Add Property form ── */
+    /* ── Property reorder buttons ── */
+    .prop-order-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .prop-order-btn {
+      background: rgba(0,0,0,.07);
+      border: none;
+      border-radius: 4px;
+      width: 26px;
+      height: 22px;
+      font-size: .78rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--slate-500);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .prop-order-btn:active { background: rgba(0,0,0,.18); }
 
     /* ── Add Property form ── */
     .add-prop-toggle {
@@ -1056,25 +1081,18 @@ const STEPS = [
   'Übergabe neuer Mieter koordinieren'
 ];
 
-// Color palette – cycles automatically for any number of properties
-const COLOR_PALETTE = [
-  { bg: '#dbeafe', accent: '#2563eb', pill: '#bfdbfe' },  // Blau
-  { bg: '#e0f2fe', accent: '#0284c7', pill: '#bae6fd' },  // Hellblau
-  { bg: '#e2e8f0', accent: '#475569', pill: '#cbd5e1' },  // Schiefergrau
-  { bg: '#eef2f8', accent: '#6b82a6', pill: '#d6e0ee' },  // Blaugrau
-  { bg: '#ede9fe', accent: '#7c3aed', pill: '#ddd6fe' },  // Violett
-  { bg: '#dcfce7', accent: '#15803d', pill: '#bbf7d0' },  // Grün
-  { bg: '#fef3c7', accent: '#b45309', pill: '#fde68a' },  // Amber
-  { bg: '#fce7f3', accent: '#be185d', pill: '#fbcfe8' },  // Pink
-];
-
-function getColorForProp(propId) {
-  const idx = state.properties.findIndex(p => p.id === propId);
-  return COLOR_PALETTE[Math.max(0, idx) % COLOR_PALETTE.length];
+// Phase-based colors: Inserat=blau, Besichtigung=orange, Mietanbot=gelb, Mietvertrag=grün
+function getPhaseForProp(p) {
+  const i = nextStepIndex(p);
+  if (i === -1)  return { bg: '#dcfce7', accent: '#16a34a', pill: '#86efac', label: '✓ Fertig',      cls: 'urgency-green'  };
+  if (i >= 8)    return { bg: '#dcfce7', accent: '#16a34a', pill: '#86efac', label: 'Mietvertrag',   cls: 'urgency-green'  };
+  if (i >= 4)    return { bg: '#fef9c3', accent: '#ca8a04', pill: '#fde047', label: 'Mietanbot',     cls: 'urgency-amber'  };
+  if (i >= 2)    return { bg: '#ffedd5', accent: '#f97316', pill: '#fdba74', label: 'Besichtigung',  cls: 'urgency-orange' };
+  return         { bg: '#dbeafe', accent: '#2563eb', pill: '#93c5fd', label: 'Inserat',      cls: 'urgency-blue'   };
 }
 
-function applyColors(el, propId) {
-  const c = getColorForProp(propId);
+function applyColors(el, p) {
+  const c = getPhaseForProp(p);
   el.style.setProperty('--prop-bg',     c.bg);
   el.style.setProperty('--prop-accent', c.accent);
   el.style.setProperty('--prop-pill',   c.pill);
@@ -1351,7 +1369,7 @@ function renderDashboard() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const allTermine = [];
   state.properties.forEach(p => {
-    const accent = getColorForProp(p.id).accent;
+    const accent = getPhaseForProp(p).accent;
     const sorted = p.termine
       .map(t => {
         const txt = typeof t === 'string' ? t : t.text;
@@ -1383,16 +1401,17 @@ function renderDashboard() {
   // ToDo list
   renderTodos();
 
-  // Property cards
+  // Property cards – sorted by priority (Kritisch first)
   const container = document.getElementById('property-cards');
   container.innerHTML = '';
   if (!Array.isArray(state.properties)) return;
+  // Keep user-defined order (↑↓ buttons on each card)
   state.properties.forEach(p => {
-    const done = countDone(p);
+    const done    = countDone(p);
     const nextIdx = nextStepIndex(p);
     const nextName = nextIdx >= 0 ? STEPS[nextIdx] : 'Alle Schritte erledigt ✓';
-    const urg = urgencyFor(p);
-    const pct = Math.round((done / 12) * 100);
+    const phase = getPhaseForProp(p);
+    const pct   = Math.round((done / 12) * 100);
 
     // Countdown badge for Mietende
     const daysLeft = daysUntil(p.mietende);
@@ -1408,7 +1427,7 @@ function renderDashboard() {
 
     const card = document.createElement('div');
     card.className = 'property-card';
-    applyColors(card, p.id);
+    applyColors(card, p);
     card.onclick = () => showDetail(p.id);
     const propMeta = [p.flaeche, p.bruttomiete].filter(Boolean).join(' · ');
     card.innerHTML = `
@@ -1418,7 +1437,13 @@ function renderDashboard() {
           ${propMeta ? `<div class="prop-meta-line">${escHtml(propMeta)}</div>` : ''}
           <div class="prop-mietende">Ende Mietvertrag: ${escHtml(p.mietende)} ${countdownHtml}</div>
         </div>
-        <span class="urgency-badge" title="Vermietungsziel: ${escHtml(p.ziel)}">${urg.emoji}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <span class="urgency-text ${phase.cls}" title="Vermietungsziel: ${escHtml(p.ziel)}">${phase.label}</span>
+          <div class="prop-order-btns">
+            <button class="prop-order-btn" data-id="${p.id}" data-dir="up"   title="Nach oben">↑</button>
+            <button class="prop-order-btn" data-id="${p.id}" data-dir="down" title="Nach unten">↓</button>
+          </div>
+        </div>
       </div>
       <div class="progress-wrap">
         <div class="progress-label">
@@ -1428,6 +1453,12 @@ function renderDashboard() {
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>
       <div class="next-step">→ ${escHtml(nextName)}</div>`;
+    card.querySelectorAll('.prop-order-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        btn.dataset.dir === 'up' ? movePropUp(btn.dataset.id) : movePropDown(btn.dataset.id);
+      });
+    });
     container.appendChild(card);
   });
 }
@@ -1436,13 +1467,13 @@ function renderDashboard() {
 function renderDetail(propId) {
   const p = getProp(propId);
 
-  // Apply property colors to entire detail content area
+  // Apply phase-based colors to entire detail content area
   const content = document.getElementById('detail-content');
-  applyColors(content, propId);
+  applyColors(content, p);
 
-  // Tint the meta card with the property pastel
+  // Tint the meta card with the phase color
   const metaCard = document.getElementById('detail-meta-card');
-  metaCard.style.background = getColorForProp(propId).bg;
+  metaCard.style.background = getPhaseForProp(p).bg;
 
   document.getElementById('detail-header-date').textContent = todayStr();
 
@@ -1466,10 +1497,10 @@ function renderDetail(propId) {
   bruttomieteEl.value = p.bruttomiete || '';
   bruttomieteEl.onblur = () => { p.bruttomiete = bruttomieteEl.value.trim(); saveState(); renderDashboard(); };
 
-  const urg = urgencyFor(p);
+  const phase = getPhaseForProp(p);
   const badge = document.getElementById('detail-urgency-badge');
-  badge.textContent = `${urg.emoji} ${urg.label}`;
-  badge.className = `urgency-text ${urg.cls}`;
+  badge.textContent = `${phase.label} · ${countDone(p)}/12`;
+  badge.className   = `urgency-text ${phase.cls}`;
 
   const done = countDone(p);
   const pct = Math.round((done / 12) * 100);
@@ -1586,6 +1617,23 @@ function resetProperty() {
 document.getElementById('termin-desc').addEventListener('keydown', e => {
   if (e.key === 'Enter') addTermin();
 });
+
+// ── Property ordering ──────────────────────────────────────────────────────
+function movePropUp(propId) {
+  const idx = state.properties.findIndex(p => p.id === propId);
+  if (idx <= 0) return;
+  [state.properties[idx - 1], state.properties[idx]] = [state.properties[idx], state.properties[idx - 1]];
+  saveState();
+  renderDashboard();
+}
+
+function movePropDown(propId) {
+  const idx = state.properties.findIndex(p => p.id === propId);
+  if (idx >= state.properties.length - 1) return;
+  [state.properties[idx + 1], state.properties[idx]] = [state.properties[idx], state.properties[idx + 1]];
+  saveState();
+  renderDashboard();
+}
 
 // ── Property management ────────────────────────────────────────────────────
 function toggleAddPropForm() {
