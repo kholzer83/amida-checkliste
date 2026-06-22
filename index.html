@@ -1053,7 +1053,7 @@ function renderCurrentView() {
 
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider).catch(e => {
+  firebase.auth().signInWithRedirect(provider).catch(e => {
     console.warn('Google sign-in error:', e);
   });
 }
@@ -1064,6 +1064,9 @@ function initFirebase() {
     const auth = firebase.auth();
     const db   = firebase.database();
     let dbConnected = false;
+
+    // Process result after Google redirect
+    auth.getRedirectResult().catch(e => console.warn('Redirect error:', e));
 
     auth.onAuthStateChanged(user => {
       if (!user) {
