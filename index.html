@@ -856,6 +856,7 @@
     </svg>
     Mit Google anmelden
   </button>
+  <div id="login-error" style="display:none; color:#f87171; font-size:0.8rem; text-align:center; margin-top:8px; max-width:280px;"></div>
 </div>
 
 <!-- ══ SCREEN: DASHBOARD ══ -->
@@ -1053,8 +1054,10 @@ function renderCurrentView() {
 
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithRedirect(provider).catch(e => {
-    console.warn('Google sign-in error:', e);
+  firebase.auth().signInWithPopup(provider).catch(e => {
+    console.warn('Sign-in error:', e.code, e.message);
+    const el = document.getElementById('login-error');
+    if (el) { el.textContent = 'Anmeldung fehlgeschlagen: ' + e.code; el.style.display = 'block'; }
   });
 }
 
@@ -1064,9 +1067,6 @@ function initFirebase() {
     const auth = firebase.auth();
     const db   = firebase.database();
     let dbConnected = false;
-
-    // Process result after Google redirect
-    auth.getRedirectResult().catch(e => console.warn('Redirect error:', e));
 
     auth.onAuthStateChanged(user => {
       if (!user) {
